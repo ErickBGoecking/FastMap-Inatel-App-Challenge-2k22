@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -10,6 +11,12 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 
   Completer<GoogleMapController> _controller = Completer();
+
+  CameraPosition _posicaoCamera = CameraPosition(
+      target: LatLng(-22.256959, -45.696820),
+      zoom: 19
+  );
+
   Set<Marker> _marcadores = {};
 
   _onMapCreated( GoogleMapController googleMapController ){
@@ -21,12 +28,7 @@ class _HomeState extends State<Home> {
     GoogleMapController googleMapController = await _controller.future;
     googleMapController.animateCamera(
       CameraUpdate.newCameraPosition(
-        CameraPosition(
-            target: LatLng(-23.562436, -46.655005),
-            zoom: 16,
-            tilt: 0,
-            bearing: 270
-        )
+        _posicaoCamera
       )
     );
 
@@ -36,49 +38,67 @@ class _HomeState extends State<Home> {
 
     Set<Marker> marcadoresLocal = {};
 
-    Marker marcadorShopping = Marker(
-        markerId: MarkerId("marcador-shopping"),
-        position: LatLng(-23.563370, -46.652923),
+    Marker marcadorInatel = Marker(
+        markerId: MarkerId("Inatel"),
+        position: LatLng(-22.257056, -45.696612),
       infoWindow: InfoWindow(
-        title: "Shopping Cidade São Paulo"
+        title: "Inatel"
       ),
       icon: BitmapDescriptor.defaultMarkerWithHue(
         BitmapDescriptor.hueMagenta
       ),
       onTap: (){
-        print("Shopping clicado!!");
+        print("Inatel clicado!!");
       }
       //rotation: 45
     );
 
-    Marker marcadorCartorio = Marker(
-        markerId: MarkerId("marcador-cartorio"),
-        position: LatLng(-23.562868, -46.655874),
+    Marker marcadorGoianos = Marker(
+        markerId: MarkerId("Goianos"),
+        position: LatLng(-22.255148, -45.697823),
       infoWindow: InfoWindow(
-          title: "12 Cartório de notas"
+          title: "Goianos"
       ),
       icon: BitmapDescriptor.defaultMarkerWithHue(
         BitmapDescriptor.hueBlue
       ),
         onTap: (){
-          print("Cartório clicado!!");
+          print("Goianos!!");
         }
     );
 
-    marcadoresLocal.add( marcadorShopping );
-    marcadoresLocal.add( marcadorCartorio );
+    marcadoresLocal.add( marcadorInatel );
+    marcadoresLocal.add( marcadorGoianos );
 
     setState(() {
       _marcadores = marcadoresLocal;
     });
+  }
 
+  _recuperarLocalizacaoAtual() async {
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high
+    );
 
+    setState(() {
+      _posicaoCamera = CameraPosition(
+          target: LatLng (position.latitude, position.longitude),
+              zoom: 17
+      );
+      _movimentarCamera();
+    });
+
+    //-22.259653, -45.702384
+    //-22.259653, -45.702384
+
+    //print("Localização Atual: " + position.toString());
   }
 
   @override
   void initState() {
     super.initState();
-    _carregarMarcadores();
+    //_carregarMarcadores();
+    _recuperarLocalizacaoAtual();
   }
 
   @override
@@ -102,12 +122,10 @@ class _HomeState extends State<Home> {
             //mapType: MapType.satellite,
             //mapType: MapType.terrain,
             //-23.562436, -46.655005
-            initialCameraPosition: CameraPosition(
-                target: LatLng(-23.563370, -46.652923),
-                zoom: 16
-            ),
+            initialCameraPosition: _posicaoCamera  ,
             onMapCreated: _onMapCreated,
-            markers: _marcadores,
+            myLocationEnabled: true,
+            //markers: _marcadores,
         ),
       ),
     );
